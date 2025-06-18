@@ -149,7 +149,23 @@ class DisasterDetailPage extends StatelessWidget {
                     Text(details),
                     SizedBox(height: 12),
                     Text('Kebutuhan Relawan:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ...requiredVolunteers.entries.map((e) => Text('• ${e.value} ${e.key}')), 
+                    ...requiredVolunteers.entries.map((e) => Text('• ${e.value} ${e.key}')),
+                    SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.volunteer_activism),
+                        label: Text('Daftar Jadi Relawan'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/role',
+                            arguments: {'eventId': eventId},
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 );
               },

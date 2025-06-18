@@ -53,7 +53,62 @@ class HomePage extends StatelessWidget {
                 ),
                 SizedBox(height: 20),
                 sectionTitle('📌 Status Anda Saat Ini'),
-                infoCard('Status: Standby\nTidak ada tugas aktif.'),
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).get(),
+                  builder: (context, userSnap) {
+                    if (!userSnap.hasData) return infoCard('Status: Standby\nTidak ada tugas aktif.');
+                    final userId = FirebaseAuth.instance.currentUser?.uid;
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance.collection('activeEvents').snapshots(),
+                      builder: (context, eventSnap) {
+                        if (!eventSnap.hasData) return infoCard('Status: Standby\nTidak ada tugas aktif.');
+                        // Cek apakah user terdaftar di event manapun
+                        String? activeEventId;
+                        String? activeEventType;
+                        String? activeEventLocation;
+                        String? activeEventCategory;
+                        for (final doc in eventSnap.data!.docs) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final signed = data['signedVolunteers'] as Map<String, dynamic>? ?? {};
+                          for (final entry in signed.entries) {
+                            final list = (entry.value as List?) ?? [];
+                            if (list.contains(userId)) {
+                              activeEventId = doc.id;
+                              activeEventType = data['type'] ?? '-';
+                              final loc = data['location'] ?? {};
+                              activeEventLocation = (loc['city'] ?? '-') + ', ' + (loc['province'] ?? '-');
+                              activeEventCategory = entry.key;
+                              break;
+                            }
+                          }
+                          if (activeEventId != null) break;
+                        }
+                        if (activeEventId != null) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              infoCard('Status: Relawan Aktif'),
+                              SizedBox(height: 8),
+                              Card(
+                                color: Color(0xFFE8F4F8),
+                                child: ListTile(
+                                  title: Text('Tugas Aktif: $activeEventType'),
+                                  subtitle: Text('Lokasi: $activeEventLocation\nKategori: $activeEventCategory'),
+                                  trailing: Icon(Icons.assignment_turned_in, color: Colors.green),
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/detail', arguments: {'eventId': activeEventId});
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return infoCard('Status: Standby\nTidak ada tugas aktif.');
+                        }
+                      },
+                    );
+                  },
+                ),
                 SizedBox(height: 15),
                 sectionTitle('🆘 Misi Bencana Terkini'),
                 StreamBuilder<QuerySnapshot>(

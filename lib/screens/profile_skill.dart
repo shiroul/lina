@@ -40,6 +40,12 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant ProfileSkillPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadProfile();
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -94,7 +100,7 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
                   ),
                   SizedBox(height: 20),
                   TextFormField(
-                    initialValue: name,
+                    controller: TextEditingController(text: name),
                     decoration: InputDecoration(labelText: 'Nama Lengkap'),
                     onChanged: (v) => name = v,
                     validator: (v) => v!.isEmpty ? 'Nama wajib diisi' : null,
@@ -102,7 +108,7 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
                   ),
                   SizedBox(height: 10),
                   TextFormField(
-                    initialValue: phone,
+                    controller: TextEditingController(text: phone),
                     decoration: InputDecoration(labelText: 'Nomor Telepon'),
                     keyboardType: TextInputType.phone,
                     onChanged: (v) => phone = v,
@@ -111,7 +117,7 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
                   ),
                   SizedBox(height: 10),
                   TextFormField(
-                    initialValue: emergencyContact,
+                    controller: TextEditingController(text: emergencyContact),
                     decoration: InputDecoration(labelText: 'Kontak Darurat'),
                     keyboardType: TextInputType.phone,
                     onChanged: (v) => emergencyContact = v,

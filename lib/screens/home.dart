@@ -56,9 +56,51 @@ class HomePage extends StatelessWidget {
                 infoCard('Status: Standby\nTidak ada tugas aktif.'),
                 SizedBox(height: 15),
                 sectionTitle('🆘 Misi Bencana Terkini'),
-                listItem('Banjir Jakarta Timur', 'Banjir • Jakarta Timur • 15 menit lalu'),
-                listItem('Kebakaran Tambora', 'Kebakaran • Jakarta Barat • 1 jam lalu'),
-                TextButton(onPressed: () {}, child: Text('Lihat Semua Misi')),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('activeEvents')
+                      .orderBy('reportedAt', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return infoCard('Belum ada misi aktif.');
+                    }
+                    final events = snapshot.data!.docs;
+                    return Column(
+                      children: [
+                        ...events.take(3).map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final type = data['type'] ?? '-';
+                          final location = data['location'] ?? {};
+                          final city = location['city'] ?? '-';
+                          final province = location['province'] ?? '-';
+                          final ts = data['reportedAt'] as Timestamp?;
+                          final timeStr = ts != null ? _timeAgo(ts.toDate()) : '-';
+                          return listItem(
+                            type,
+                            '$city, $province • $timeStr',
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/detail',
+                                arguments: {'eventId': doc.id},
+                              );
+                            },
+                          );
+                        }).toList(),
+                        TextButton(
+                          onPressed: () {
+                            // TODO: Navigasi ke halaman semua misi
+                          },
+                          child: Text('Lihat Semua Misi'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 SizedBox(height: 15),
                 sectionTitle('🛠 Profil & Keahlian'),
                 listItem('Update Keahlian Anda', 'Tambahkan P3K, Logistik, Dokumentasi...', onTap: () {
@@ -71,6 +113,14 @@ class HomePage extends StatelessWidget {
             ),
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/createEvent');
+        },
+        child: Icon(Icons.add_box),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
       ),
     );
   }
@@ -94,4 +144,13 @@ class HomePage extends StatelessWidget {
         trailing: Icon(Icons.chevron_right),
         onTap: onTap,
       );
+
+  String _timeAgo(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
+  }
 }

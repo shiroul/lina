@@ -12,7 +12,7 @@ import 'screens/admin_create_event.dart';
 import 'screens/role_selection.dart';
 import 'screens/checkin.dart';
 import 'screens/profile_skill.dart';
-import 'screens/edit_profile.dart';
+import 'screens/disaster_detail_page.dart' as dynamic_detail;
 import 'firebase_options.dart';
 
 void main() async {
@@ -36,12 +36,15 @@ class DisasterVolunteerApp extends StatelessWidget {
         '/profile': (_) => ProfileSetupPage(),
         '/home': (_) => HomePage(),
         '/notification': (_) => EmergencyNotificationPage(),
-        '/detail': (_) => DisasterDetailPage(),
+        '/detail': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final eventId = args != null ? args['eventId'] as String : '';
+          return dynamic_detail.DisasterDetailPage(eventId: eventId);
+        },
         '/createEvent': (_) => AdminCreateEventPage(),
         '/role': (_) => RoleSelectionPage(),
         '/checkin': (_) => CheckinPage(),
         '/profileSkill': (_) => ProfileSkillPage(),
-        '/editProfile': (_) => EditProfilePage(),
       },
       debugShowCheckedModeBanner: false,
     );

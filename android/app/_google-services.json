@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "641365738436",
+    "project_id": "cs6-mobile",
+    "storage_bucket": "cs6-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641365738436:android:7c04b66216d4d44a361a91",
+        "android_client_info": {
+          "package_name": "com.example.deeznuts"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoFCy5W1WH20wCQcaxQBZYEOO61HKNTPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641365738436:android:991daddc8f89bcc3361a91",
+        "android_client_info": {
+          "package_name": "com.kelompok2.tubes_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoFCy5W1WH20wCQcaxQBZYEOO61HKNTPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

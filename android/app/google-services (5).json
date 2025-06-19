@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1096557468060",
+    "project_id": "tubes-c9d1a",
+    "storage_bucket": "tubes-c9d1a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1096557468060:android:00a0d80da8f130dab3d059",
+        "android_client_info": {
+          "package_name": "com.example.deeznuts"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAedcMBwhzCQFH3kAth_eCdzVboVlFauHw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

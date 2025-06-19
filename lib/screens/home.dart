@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'volunteer_history.dart'; // Ganti dengan import yang sesuai
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -163,7 +164,17 @@ class HomePage extends StatelessWidget {
                 }),
                 SizedBox(height: 15),
                 sectionTitle('📜 Riwayat Partisipasi'),
-                infoCard('Belum ada riwayat. Anda akan melihat misi yang telah diselesaikan di sini.'),
+                ListTile(
+                  title: Text('Lihat Riwayat Partisipasi'),
+                  subtitle: Text('Lihat event yang pernah Anda ikuti.'),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => VolunteerHistoryPage()),
+                    );
+                  },
+                ),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'volunteer_history.dart'; // Ganti dengan import yang sesuai
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -53,12 +54,109 @@ class HomePage extends StatelessWidget {
                 ),
                 SizedBox(height: 20),
                 sectionTitle('📌 Status Anda Saat Ini'),
-                infoCard('Status: Standby\nTidak ada tugas aktif.'),
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).get(),
+                  builder: (context, userSnap) {
+                    if (!userSnap.hasData) return infoCard('Status: Standby\nTidak ada tugas aktif.');
+                    final userId = FirebaseAuth.instance.currentUser?.uid;
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance.collection('activeEvents').snapshots(),
+                      builder: (context, eventSnap) {
+                        if (!eventSnap.hasData) return infoCard('Status: Standby\nTidak ada tugas aktif.');
+                        // Cek apakah user terdaftar di event manapun
+                        String? activeEventId;
+                        String? activeEventType;
+                        String? activeEventLocation;
+                        String? activeEventCategory;
+                        for (final doc in eventSnap.data!.docs) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final signed = data['signedVolunteers'] as Map<String, dynamic>? ?? {};
+                          for (final entry in signed.entries) {
+                            final list = (entry.value as List?) ?? [];
+                            if (list.contains(userId)) {
+                              activeEventId = doc.id;
+                              activeEventType = data['type'] ?? '-';
+                              final loc = data['location'] ?? {};
+                              activeEventLocation = (loc['city'] ?? '-') + ', ' + (loc['province'] ?? '-');
+                              activeEventCategory = entry.key;
+                              break;
+                            }
+                          }
+                          if (activeEventId != null) break;
+                        }
+                        if (activeEventId != null) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              infoCard('Status: Relawan Aktif'),
+                              SizedBox(height: 8),
+                              Card(
+                                color: Color(0xFFE8F4F8),
+                                child: ListTile(
+                                  title: Text('Tugas Aktif: $activeEventType'),
+                                  subtitle: Text('Lokasi: $activeEventLocation\nKategori: $activeEventCategory'),
+                                  trailing: Icon(Icons.assignment_turned_in, color: Colors.green),
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/detail', arguments: {'eventId': activeEventId});
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return infoCard('Status: Standby\nTidak ada tugas aktif.');
+                        }
+                      },
+                    );
+                  },
+                ),
                 SizedBox(height: 15),
                 sectionTitle('🆘 Misi Bencana Terkini'),
-                listItem('Banjir Jakarta Timur', 'Banjir • Jakarta Timur • 15 menit lalu'),
-                listItem('Kebakaran Tambora', 'Kebakaran • Jakarta Barat • 1 jam lalu'),
-                TextButton(onPressed: () {}, child: Text('Lihat Semua Misi')),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('activeEvents')
+                      .orderBy('reportedAt', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return infoCard('Belum ada misi aktif.');
+                    }
+                    final events = snapshot.data!.docs;
+                    return Column(
+                      children: [
+                        ...events.take(3).map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final type = data['type'] ?? '-';
+                          final location = data['location'] ?? {};
+                          final city = location['city'] ?? '-';
+                          final province = location['province'] ?? '-';
+                          final ts = data['reportedAt'] as Timestamp?;
+                          final timeStr = ts != null ? _timeAgo(ts.toDate()) : '-';
+                          return listItem(
+                            type,
+                            '$city, $province • $timeStr',
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/detail',
+                                arguments: {'eventId': doc.id},
+                              );
+                            },
+                          );
+                        }).toList(),
+                        TextButton(
+                          onPressed: () {
+                            // TODO: Navigasi ke halaman semua misi
+                          },
+                          child: Text('Lihat Semua Misi'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 SizedBox(height: 15),
                 sectionTitle('🛠 Profil & Keahlian'),
                 listItem('Update Keahlian Anda', 'Tambahkan P3K, Logistik, Dokumentasi...', onTap: () {
@@ -66,11 +164,29 @@ class HomePage extends StatelessWidget {
                 }),
                 SizedBox(height: 15),
                 sectionTitle('📜 Riwayat Partisipasi'),
-                infoCard('Belum ada riwayat. Anda akan melihat misi yang telah diselesaikan di sini.'),
+                ListTile(
+                  title: Text('Lihat Riwayat Partisipasi'),
+                  subtitle: Text('Lihat event yang pernah Anda ikuti.'),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => VolunteerHistoryPage()),
+                    );
+                  },
+                ),
               ],
             ),
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/createEvent');
+        },
+        child: Icon(Icons.add_box),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
       ),
     );
   }
@@ -94,4 +210,13 @@ class HomePage extends StatelessWidget {
         trailing: Icon(Icons.chevron_right),
         onTap: onTap,
       );
+
+  String _timeAgo(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
+  }
 }

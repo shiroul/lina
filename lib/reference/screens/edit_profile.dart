@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
-class ProfileSkillPage extends StatefulWidget {
-  const ProfileSkillPage({super.key});
+class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({super.key});
 
   @override
-  State<ProfileSkillPage> createState() => _ProfileSkillPageState();
+  State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _ProfileSkillPageState extends State<ProfileSkillPage> {
+class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   String name = '', phone = '', emergencyContact = '';
   List<String> skills = [];
+  bool isLoading = false;
   String? profileImageUrl;
   File? _image;
-  bool isLoading = false;
-  bool isEditing = false;
 
   @override
   void initState() {
@@ -40,18 +39,6 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
     });
   }
 
-  @override
-  void didUpdateWidget(covariant ProfileSkillPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _loadProfile();
-  }
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _image = File(picked.path));
-  }
-
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
@@ -63,10 +50,14 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
       'emergencyContact': emergencyContact,
       'skills': skills,
     });
-    setState(() {
-      isEditing = false;
-      isLoading = false;
-    });
+    setState(() => isLoading = false);
+    Navigator.pop(context);
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) setState(() => _image = File(picked.path));
   }
 
   @override
@@ -75,7 +66,7 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
     double containerW = w > 500 ? 400 : w * 0.9;
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F0),
-      appBar: AppBar(title: Text('Profil & Keahlian')),
+      appBar: AppBar(title: Text('Edit Profil')),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(20),
@@ -90,7 +81,7 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
                 children: [
                   Center(
                     child: GestureDetector(
-                      onTap: isEditing ? _pickImage : null,
+                      onTap: _pickImage,
                       child: _image != null
                           ? ClipOval(child: Image.file(_image!, width: 100, height: 100, fit: BoxFit.cover))
                           : (profileImageUrl != null && profileImageUrl!.isNotEmpty)
@@ -100,29 +91,26 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
                   ),
                   SizedBox(height: 20),
                   TextFormField(
-                    controller: TextEditingController(text: name),
+                    initialValue: name,
                     decoration: InputDecoration(labelText: 'Nama Lengkap'),
                     onChanged: (v) => name = v,
                     validator: (v) => v!.isEmpty ? 'Nama wajib diisi' : null,
-                    enabled: isEditing,
                   ),
                   SizedBox(height: 10),
                   TextFormField(
-                    controller: TextEditingController(text: phone),
+                    initialValue: phone,
                     decoration: InputDecoration(labelText: 'Nomor Telepon'),
                     keyboardType: TextInputType.phone,
                     onChanged: (v) => phone = v,
                     validator: (v) => v!.isEmpty ? 'Nomor telepon wajib diisi' : null,
-                    enabled: isEditing,
                   ),
                   SizedBox(height: 10),
                   TextFormField(
-                    controller: TextEditingController(text: emergencyContact),
+                    initialValue: emergencyContact,
                     decoration: InputDecoration(labelText: 'Kontak Darurat'),
                     keyboardType: TextInputType.phone,
                     onChanged: (v) => emergencyContact = v,
                     validator: (v) => v!.isEmpty ? 'Kontak darurat wajib diisi' : null,
-                    enabled: isEditing,
                   ),
                   SizedBox(height: 20),
                   Text('Keahlian:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -132,24 +120,14 @@ class _ProfileSkillPageState extends State<ProfileSkillPage> {
                         .map((s) => FilterChip(
                               label: Text(s),
                               selected: skills.contains(s),
-                              onSelected: isEditing ? (val) => setState(() => val ? skills.add(s) : skills.remove(s)) : null,
+                              onSelected: (val) => setState(() => val ? skills.add(s) : skills.remove(s)),
                             ))
                         .toList(),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: isLoading
-                        ? null
-                        : () {
-                            if (isEditing) {
-                              _saveProfile();
-                            } else {
-                              setState(() => isEditing = true);
-                            }
-                          },
-                    child: isLoading
-                        ? CircularProgressIndicator()
-                        : Text(isEditing ? 'Simpan' : 'Edit'),
+                    onPressed: isLoading ? null : _saveProfile,
+                    child: isLoading ? CircularProgressIndicator() : Text('Simpan'),
                   ),
                 ],
               ),
